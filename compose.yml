@@ -12,16 +12,18 @@ services:
     depends_on:
       - db
     volumes:
-      - /backend/node_modules
+      - ./backend:/workdir
+      - /workdir/node_modules
     develop:
       watch:
         - action: sync
-          path: .
-          target: /backend
+          path: ./backend
+          target: /workdir
           ignore:
             - node_modules
+            - .pnpm
         - action: rebuild
-          path: ./package.json
+          path: ./backend/package.json
 
   db:
     image: postgres:14-alpine
