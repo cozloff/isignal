@@ -13,7 +13,7 @@ CMD ["pnpm", "test"]
 FROM deps AS dev
 WORKDIR /workdir
 COPY . .
-EXPOSE 8000
+EXPOSE 3000
 CMD ["pnpm", "run", "start:dev"]
 
 FROM deps AS builder
@@ -25,6 +25,6 @@ FROM deps AS prod-deps
 WORKDIR /workdir
 RUN pnpm install --prod
 
-EXPOSE 8000
+EXPOSE 3000
 
 CMD ["node", "dist/main"]

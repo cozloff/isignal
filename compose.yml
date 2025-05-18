@@ -6,7 +6,7 @@ services:
       target: dev
     container_name: nest
     ports:
-      - "8000:8000"
+      - "3000:3000"
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/mydb
     depends_on:
