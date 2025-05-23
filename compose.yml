@@ -1,4 +1,27 @@
 services:
+  react-router:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: dev
+    container_name: docker-react-router
+    depends_on:
+      - nest
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - /app/node_modules
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend/app
+          target: /workdir/app
+          ignore:
+            - node_modules
+        - action: rebuild
+          path: ./frontend/package.json
+    ports: !override
+      - 5173:5173
   nest:
     build:
       context: ./backend
