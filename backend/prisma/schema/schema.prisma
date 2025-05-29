@@ -6,7 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  previewFeatures = ["prismaSchemaFolder"]
 }
 
 datasource db {
@@ -14,16 +14,4 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Location {
-  id          String   @id @default(uuid())
-  name        String
-  address     String
-  city        String
-  state       String?
-  country     String
-  postalCode  String?
-  latitude    Float?
-  longitude   Float?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
+
