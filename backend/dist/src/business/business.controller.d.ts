@@ -8,7 +8,10 @@ export declare class BusinessController {
     findAll(): Promise<{
         id: number;
         name: string;
-        employeeId: number;
+        category: string;
+        registrationStatus: string;
+        ownerId: number;
+        createdAt: Date;
     }[]>;
     findOne(id: string): string;
     update(id: string, updateBusinessDto: UpdateBusinessDto): Promise<import("pg").QueryResult<never>>;

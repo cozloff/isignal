@@ -1,10 +1,10 @@
-export declare const users: import("drizzle-orm/pg-core").PgTableWithColumns<{
-    name: "users";
+export declare const position: import("drizzle-orm/pg-core").PgTableWithColumns<{
+    name: "position";
     schema: undefined;
     columns: {
         id: import("drizzle-orm/pg-core").PgColumn<{
             name: "id";
-            tableName: "users";
+            tableName: "position";
             dataType: "number";
             columnType: "PgSerial";
             data: number;
@@ -19,14 +19,14 @@ export declare const users: import("drizzle-orm/pg-core").PgTableWithColumns<{
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        name: import("drizzle-orm/pg-core").PgColumn<{
-            name: "name";
-            tableName: "users";
+        title: import("drizzle-orm/pg-core").PgColumn<{
+            name: "title";
+            tableName: "position";
             dataType: "string";
             columnType: "PgText";
             data: string;
             driverParam: string;
-            notNull: true;
+            notNull: false;
             hasDefault: false;
             isPrimaryKey: false;
             isAutoincrement: false;
@@ -36,14 +36,14 @@ export declare const users: import("drizzle-orm/pg-core").PgTableWithColumns<{
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        email: import("drizzle-orm/pg-core").PgColumn<{
-            name: "email";
-            tableName: "users";
+        description: import("drizzle-orm/pg-core").PgColumn<{
+            name: "description";
+            tableName: "position";
             dataType: "string";
             columnType: "PgText";
             data: string;
             driverParam: string;
-            notNull: true;
+            notNull: false;
             hasDefault: false;
             isPrimaryKey: false;
             isAutoincrement: false;
@@ -55,7 +55,4 @@ export declare const users: import("drizzle-orm/pg-core").PgTableWithColumns<{
         }, {}, {}>;
     };
     dialect: "pg";
-}>;
-export declare const usersRelations: import("drizzle-orm").Relations<"users", {
-    business: import("drizzle-orm").Many<"business">;
 }>;

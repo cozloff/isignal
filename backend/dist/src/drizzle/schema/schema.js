@@ -14,6 +14,14 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-__exportStar(require("./users.schema"), exports);
+__exportStar(require("./user.schema"), exports);
 __exportStar(require("./business.schema"), exports);
+__exportStar(require("./employee.schema"), exports);
+__exportStar(require("./friendship.schema"), exports);
+__exportStar(require("./list.schema"), exports);
+__exportStar(require("./list.businesses.schema"), exports);
+__exportStar(require("./location.schema"), exports);
+__exportStar(require("./position.schema"), exports);
+__exportStar(require("./review.schema"), exports);
+__exportStar(require("./service.schema"), exports);
 //# sourceMappingURL=schema.js.map

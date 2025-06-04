@@ -1,10 +1,10 @@
-export declare const business: import("drizzle-orm/pg-core").PgTableWithColumns<{
-    name: "business";
+export declare const employee: import("drizzle-orm/pg-core").PgTableWithColumns<{
+    name: "employee";
     schema: undefined;
     columns: {
         id: import("drizzle-orm/pg-core").PgColumn<{
             name: "id";
-            tableName: "business";
+            tableName: "employee";
             dataType: "number";
             columnType: "PgSerial";
             data: number;
@@ -19,64 +19,9 @@ export declare const business: import("drizzle-orm/pg-core").PgTableWithColumns<
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        name: import("drizzle-orm/pg-core").PgColumn<{
-            name: "name";
-            tableName: "business";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        category: import("drizzle-orm/pg-core").PgColumn<{
-            name: "category";
-            tableName: "business";
-            dataType: "string";
-            columnType: "PgVarchar";
-            data: string;
-            driverParam: string;
-            notNull: false;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {
-            length: 255;
-        }>;
-        registrationStatus: import("drizzle-orm/pg-core").PgColumn<{
-            name: "registration_status";
-            tableName: "business";
-            dataType: "string";
-            columnType: "PgVarchar";
-            data: string;
-            driverParam: string;
-            notNull: false;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {
-            length: 255;
-        }>;
-        ownerId: import("drizzle-orm/pg-core").PgColumn<{
-            name: "ownerId";
-            tableName: "business";
+        businessId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "business_id";
+            tableName: "employee";
             dataType: "number";
             columnType: "PgInteger";
             data: number;
@@ -91,9 +36,43 @@ export declare const business: import("drizzle-orm/pg-core").PgTableWithColumns<
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        userId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "user_id";
+            tableName: "employee";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        positionId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "position_id";
+            tableName: "employee";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         createdAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "created_at";
-            tableName: "business";
+            tableName: "employee";
             dataType: "date";
             columnType: "PgTimestamp";
             data: Date;
@@ -111,10 +90,8 @@ export declare const business: import("drizzle-orm/pg-core").PgTableWithColumns<
     };
     dialect: "pg";
 }>;
-export declare const businessRelations: import("drizzle-orm").Relations<"business", {
-    user: import("drizzle-orm").One<"user", true>;
-    review: import("drizzle-orm").Many<"review">;
-    employee: import("drizzle-orm").Many<"employee">;
-    service: import("drizzle-orm").Many<"service">;
-    location: import("drizzle-orm").One<"location", false>;
+export declare const employeeRelations: import("drizzle-orm").Relations<"employee", {
+    business: import("drizzle-orm").One<"business", true>;
+    user: import("drizzle-orm").One<"user", false>;
+    position: import("drizzle-orm").One<"position", false>;
 }>;
