@@ -1,30 +1,34 @@
-FROM node:22-alpine3.21 AS base
-RUN npm install -g pnpm
+FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS base
 
 FROM base AS deps
-WORKDIR /workdir
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install
+WORKDIR /source
+COPY SNN/SNN.csproj .
+RUN dotnet restore
+COPY ./SNN .
+RUN rm -rf bin/ obj/
 
-FROM deps AS test
-COPY . .
-CMD ["pnpm", "test"]
+FROM deps AS development
+CMD ["dotnet", "watch", "run", "--no-launch-profile"]
 
-FROM deps AS dev
-WORKDIR /workdir
-COPY . .
-EXPOSE 3000
-CMD ["pnpm", "run", "start:dev"]
+FROM deps AS build
+RUN dotnet publish -c Release -o /app --no-restore
 
-FROM deps AS builder
-WORKDIR /workdir
-COPY . .
-RUN pnpm build
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS release
+RUN apk add --no-cache icu-libs
 
-FROM deps AS prod-deps
-WORKDIR /workdir
-RUN pnpm install --prod
+WORKDIR /app
+COPY --from=build /app ./
 
-EXPOSE 3000
+ARG UID=10001
+RUN adduser \
+    --disabled-password \
+    --gecos "" \
+    --home "/nonexistent" \
+    --shell "/sbin/nologin" \
+    --no-create-home \
+    --uid "${UID}" \
+    appuser
 
-CMD ["node", "dist/main"]
+USER appuser
+
+ENTRYPOINT ["dotnet", "SNN.dll"]

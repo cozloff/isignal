@@ -4,9 +4,9 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       target: dev
-    container_name: docker-react-router
+    container_name: react-router
     depends_on:
-      - nest
+      - netcore
     environment:
       - NODE_ENV=development
     volumes:
@@ -22,39 +22,40 @@ services:
           path: ./frontend/package.json
     ports: !override
       - 5173:5173
-  nest:
+  netcore:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      target: dev
-    container_name: nest
-    ports:
-      - "3000:3000"
-    environment:
-      DATABASE_URL: postgres://postgres:postgres@db:5432/mydb
+      target: development
+    container_name: netcore
     depends_on:
-      - db
+      - postgres
+    environment:
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTPS_PORTS=443
+      - ASPNETCORE_HTTP_PORTS=80
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${CERT_PASSWORD}
+      - ConnectionStrings__Postgres=${CONNECTION_STRING}
     volumes:
-      - ./backend:/workdir
-      - /workdir/node_modules
+      - ./backend/SNN/https/aspnetapp.pfx:/https/aspnetapp.pfx:ro
+      - ./backend/export:/source/export
     develop:
       watch:
         - action: sync
-          path: ./backend
-          target: /workdir
-          ignore:
-            - node_modules
-            - .pnpm
-        - action: rebuild
-          path: ./backend/package.json
+          path: ./backend/SNN
+          target: /source
+    ports: !override
+      - 8000:80
+      - 8081:443
 
-  db:
+  postgres:
     image: postgres:14-alpine
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: mydb
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:

@@ -54,23 +54,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App({ loaderData }: Route.ComponentProps) {
   return (
-    <ClerkProvider
-      loaderData={loaderData}
-      signUpFallbackRedirectUrl="/"
-      signInFallbackRedirectUrl="/"
-    >
-      <header className="flex items-center justify-center py-8 px-4">
-        <SignedOut>
-          <SignInButton />
-        </SignedOut>
-        <SignedIn>
-          <UserButton />
-        </SignedIn>
-      </header>
-      <main>
-        <Outlet />
-      </main>
-    </ClerkProvider>
+    // <ClerkProvider
+    //   loaderData={loaderData}
+    //   signUpFallbackRedirectUrl="/"
+    //   signInFallbackRedirectUrl="/"
+    // >
+    //   <header className="flex items-center justify-center py-8 px-4">
+    //     <SignedOut>
+    //       <SignInButton />
+    //     </SignedOut>
+    //     <SignedIn>
+    //       <UserButton />
+    //     </SignedIn>
+    //   </header>
+    //   <main>
+    //     <Outlet />
+    //   </main>
+    // </ClerkProvider>
+    <Outlet />
   );
 }
 
