@@ -1,36 +1,37 @@
-import { useEffect } from "react";
 import type { Route } from "./+types/home";
-import Map from "~/components/Map";
-import { useSTTSocket } from "~/hooks/useSTTSocket";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "~/components/ui/resizable";
+import Sidebar from "~/components/Sidebar/Sidebar";
+import kindasortaLogo from "~/assets/kindasorta-logo.png";
+
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
+    { title: "kindasorta" },
     { name: "description", content: "Welcome to React Router!" },
   ];
 }
 
 export default function Home() {
-  const { transcript, sendAudioChunk } = useSTTSocket(
-    "ws://localhost:10300/ws/stt"
+  return (
+    <ResizablePanelGroup
+      direction="horizontal"
+      className=" w-full md:min-w-[450px] bg-[#171717]"
+    >
+      <ResizablePanel defaultSize={15}>
+        <Sidebar />
+      </ResizablePanel>
+      <ResizableHandle withHandle className="dark" />
+      <ResizablePanel defaultSize={85}>
+        <div className="flex h-full items-center justify-center p-6">
+          <div className="self-start flex items-center">
+            <img src={kindasortaLogo} className="h-15" />
+            <span className="font-semibold text-white">kindasorta</span>
+          </div>
+        </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   );
-
-  const startRecording = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const mediaRecorder = new MediaRecorder(stream);
-    mediaRecorder.start(250);
-
-    mediaRecorder.ondataavailable = (e) => {
-      e.data.arrayBuffer().then(sendAudioChunk);
-    };
-  };
-
-  useEffect(() => {
-    startRecording();
-  }, []);
-
-  useEffect(() => {
-    console.log(transcript);
-  }, [transcript]);
-
-  return <Map />;
 }
