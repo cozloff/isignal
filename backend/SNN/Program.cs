@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SNN.Data;
-// using SNN.Data.Seed;
+using SNN.Data.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -24,6 +24,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(
 builder.Services.AddSingleton<ITokenProvider, TokenProvider>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddTransient<Seed>();
 builder.Services.AddSwaggerGenWithAuth();
 builder.Services.AddIdentity<ApplicationIdentity, IdentityRole>(options =>
 {
@@ -101,7 +102,11 @@ else
     using (var scope = app.Services.CreateScope())
     {
         var services = scope.ServiceProvider;
-        var pgContext = services.GetRequiredService<ApplicationDbContext>();
+        var seeder = services.GetRequiredService<Seed>();
+        await seeder.SeedUsersAsync();
+
+        // TODO: SEED TABLES AFTER USERS
+        // var pgContext = services.GetRequiredService<ApplicationDbContext>();
         // await Seed.SeedTables(pgContext, false, CancellationToken.None);
     }
 }

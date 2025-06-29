@@ -1,73 +1,52 @@
-// using Bogus;
-// using Microsoft.EntityFrameworkCore;
-// using MongoDB.Bson;
-// using System.Globalization;
-// using System.Text;
-// using SNN.Models;
+using Bogus;
+using Bogus.DataSets;
+using Bogus.Extensions.UnitedStates;
+using SNN.Models;
+using SNN.Services;
+using SNN.Migrations;
+using Microsoft.EntityFrameworkCore;
 
-// namespace SNN.Data.Seed
-// {
-//     public class Seed
-//     {
-//         public static async Task SeedTables(AppDbContext context, bool _, CancellationToken ct)
-//         {
-//             var exists = await context.Set<RegisteredOffenders>().AnyAsync(ct);
-//             if (exists) return;
+namespace SNN.Data.Seed
+{
+    public class Seed
+    {
+        private readonly IAuthService _authService;
+        public Seed(IAuthService authService)
+        {
+            _authService = authService;
+        }
 
-//             var fakeOffenders = GenerateFakeRegisteredOffenders();
+        public static async Task SeedTables(DbContext context, bool _, CancellationToken ct)
+        {
+            // List<Employee> fakeEmployees = await SeedUsersAsync();
+            // await context.Set<Employee>().AddRangeAsync(fakeEmployees, ct);
+            // await context.SaveChangesAsync(ct);
+        }
 
-//             // Save to DB
-//             foreach (var offender in fakeOffenders)
-//             {
-//                 await context.Set<RegisteredOffenders>().AddAsync(offender, ct);
-//                 await context.SaveChangesAsync(ct); 
-//             }
+        public async Task SeedUsersAsync()
+        {
+            var faker = new Bogus.Faker();
 
-//             // Export to CSV
-//             ExportRegisteredOffendersToCsv(fakeOffenders);
-//         }
+            for (int i = 0; i < 100; i++)
+            {
+                var model = new RegisterModel
+                {
+                    Email = faker.Internet.Email(),
+                    Password = "password",
+                    ConfirmPassword = "password",
+                    FirstName = faker.Name.FirstName(),
+                    LastName = faker.Name.LastName(),
+                    Institution = faker.Company.CompanyName(),
+                    Phone = faker.Phone.PhoneNumber()
+                };
 
-//         private static List<RegisteredOffenders> GenerateFakeRegisteredOffenders()
-//         {
-//             return new Faker<RegisteredOffenders>()
-//                 .RuleFor(x => x.Id, _ => ObjectId.GenerateNewId().ToString())
-//                 .RuleFor(x => x.FirstName, f => f.Name.FirstName())
-//                 .RuleFor(x => x.MiddleName, f => f.Name.FirstName())
-//                 .RuleFor(x => x.LastName, f => f.Name.LastName())
-//                 .RuleFor(x => x.PriorNames, f => f.Name.FullName())
-//                 .RuleFor(x => x.Dob, f => f.Date.Past(30, DateTime.UtcNow.AddYears(-18)).Date) 
-//                 .RuleFor(x => x.Photo, f =>
-//                 {
-//                     var gender = f.PickRandom("men", "women");
-//                     var index = f.Random.Number(0, 99);
-//                     return $"https://randomuser.me/api/portraits/{gender}/{index}.jpg";
-//                 })
-//                 .RuleFor(x => x.StreetAddress, f => f.Address.StreetAddress())
-//                 .RuleFor(x => x.City, f => f.Address.City())
-//                 .RuleFor(x => x.State, f => f.Address.StateAbbr())
-//                 .RuleFor(x => x.Zip, f => f.Address.ZipCode())
-//                 .RuleFor(x => x.Institution, f => f.Company.CompanyName())
-//                 .RuleFor(x => x.FindingDate, f => f.Date.Recent(100).Date) 
-//                 .RuleFor(x => x.Details, f => f.Lorem.Paragraph())
-//                 .Generate(new Random().Next(100, 150));
-//         }
+                var result = await _authService.Register(model);
 
-
-//         private static void ExportRegisteredOffendersToCsv(List<RegisteredOffenders> offenders)
-//         {
-//             var csvLines = new List<string> { "FirstName,LastName,Dob" };
-
-//             foreach (var offender in offenders)
-//             {
-//                 var line = $"{offender.FirstName},{offender.LastName},{offender.Dob.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}";
-//                 csvLines.Add(line);
-//             }
-
-//             var exportDir = Path.Combine(Directory.GetCurrentDirectory(), "export");
-//             Directory.CreateDirectory(exportDir);
-//             var filePath = Path.Combine(exportDir, "registered_offenders_export.csv");
-
-//             File.WriteAllLines(filePath, csvLines, Encoding.UTF8);
-//         }
-//     }
-// }
+                if (result.IsFailed)
+                {
+                    Console.WriteLine($"Failed to register: {model.Email}");
+                }
+            }
+        }
+    }
+}
