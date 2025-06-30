@@ -1,23 +1,23 @@
-// using System.ComponentModel.DataAnnotations;
-// using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-// namespace SNN.Models
-// {
-//     public class Corporation
-//     {
-//         [Key]
-//         public int Id { get; set; }
+namespace SNN.Models
+{
+    public class Corporation
+    {
+        [Key]
+        public int CorporationId { get; set; }
 
-//         [Required]
-//         public string CorporationName { get; set; }
+        [Required]
+        public string CorporationName { get; set; }
 
-//         [Required]
-//         public string Industry { get; set; } = "General";
+        [Required]
+        public string Industry { get; set; } = "General";
 
-//         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public virtual ApplicationIdentity User { get; set; }
 
-//         [Required]
-//         public string UserId { get; set; }
-//         public virtual ApplicationUser User { get; set; } = null!;
-//     }
-// }
+        [Required]
+        public string UserId { get; set; }
+    }
+}

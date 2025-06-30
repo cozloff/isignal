@@ -15,7 +15,6 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddDbContext<ApplicationDbContext>(
     options => options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
 
@@ -103,12 +102,9 @@ else
     {
         var services = scope.ServiceProvider;
         var seeder = services.GetRequiredService<Seed>();
-        await seeder.SeedUsersAsync();
-
-        // TODO: SEED TABLES AFTER USERS
-        // var pgContext = services.GetRequiredService<ApplicationDbContext>();
-        // await Seed.SeedTables(pgContext, false, CancellationToken.None);
+        await seeder.SeedTablesAsync(CancellationToken.None);
     }
+
 }
 
 app.UseHttpsRedirection();
