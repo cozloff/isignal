@@ -49,12 +49,20 @@ namespace SNN.Services
             // Get new user and add claims
             ApplicationIdentity newUser = await _userManager.FindByEmailAsync(model.Email!);
             IList<Claim> claims = [
+                new Claim("Institution", model.Institution),
                 new Claim("FirstName", model.FirstName),
                 new Claim("LastName", model.LastName),
-                new Claim("Institution", model.Institution ?? ""),
-                new Claim("Phone", model.Phone ?? "")
+                new Claim("Title", model.Title),
+                new Claim("Title", model.Title),
+                new Claim("Phone", model.Phone),
+                new Claim("WorkStreetAddress", model.WorkStreetAddress),
+                new Claim("WorkCity", model.WorkCity),
+                new Claim("WorkState", model.WorkState),
+                new Claim("WorkZip", model.WorkZip),
+
             ];
             await _userManager.AddClaimsAsync(newUser!, claims);
+            
             return Result.Ok();
         }
 

@@ -25,6 +25,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddTransient<Seed>();
 builder.Services.AddSwaggerGenWithAuth();
+
+// Register Identity
 builder.Services.AddIdentity<ApplicationIdentity, IdentityRole>(options =>
 {
     options.Password.RequireDigit = false;
@@ -76,6 +78,10 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddProblemDetails();
 
+// Configure Email Service 
+var emailConfig = builder.Configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>();
+builder.Services.AddSingleton(emailConfig);
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 var app = builder.Build();
 

@@ -8,7 +8,8 @@ services:
     depends_on:
       - netcore
     environment:
-      - NODE_ENV=development
+      - VITE_BACKEND_URL=https://netcore
+      - VITE_ENVIORNMENT=development
     volumes:
       - /app/node_modules
     develop:
@@ -37,6 +38,11 @@ services:
       - ASPNETCORE_HTTP_PORTS=80
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${CERT_PASSWORD}
       - ConnectionStrings__Postgres=${CONNECTION_STRING}
+      - EmailConfiguration__From=${SMTP_From}
+      - EmailConfiguration__SmtpServer=${SMTP_SmtpServer}
+      - EmailConfiguration__Port=${SMTP_Port}
+      - EmailConfiguration__Username=${SMTP_Username}
+      - EmailConfiguration__Password=${SMTP_Password}
     volumes:
       - ./backend/SNN/https/aspnetapp.pfx:/https/aspnetapp.pfx:ro
       - ./backend/export:/source/export
@@ -61,5 +67,22 @@ services:
     ports:
       - "5436:5432"
 
+  # https://github.com/rnwood/smtp4dev/blob/master/docker-compose.yml
+  smtp4dev:
+    container_name: hts-smtp4dev
+    image: rnwood/smtp4dev:latest
+    restart: always
+    ports:
+      - "5000:80"
+      - "25:25"
+      - "143:143"
+    volumes:
+      # This is where smtp4dev stores the database..
+      - smtp4dev-data:/smtp4dev
+    environment:
+      - ServerOptions__Urls=http://*:80
+      - ServerOptions__HostName=smtp4dev
+
 volumes:
   pgdata:
+  smtp4dev-data:

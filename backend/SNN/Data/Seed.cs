@@ -43,7 +43,12 @@ namespace SNN.Data.Seed
                     FirstName = faker.Name.FirstName(),
                     LastName = faker.Name.LastName(),
                     Institution = faker.Company.CompanyName(),
-                    Phone = faker.Phone.PhoneNumber()
+                    Phone = faker.Phone.PhoneNumber("##########"), // 10-digit numeric string
+                    Title = faker.Name.JobTitle(),
+                    WorkStreetAddress = faker.Address.StreetAddress(),
+                    WorkCity = faker.Address.City(),
+                    WorkState = faker.Address.StateAbbr(),
+                    WorkZip = faker.Address.ZipCode("#####") // 5-digit ZIP
                 };
 
                 var result = await _authService.Register(model);
@@ -65,7 +70,7 @@ namespace SNN.Data.Seed
 
         private List<Corporation> SeedCorporations(List<string> userIds)
         {
-            var industries = new[] { "Tech", "Finance", "Healthcare", "Retail", "Energy" };
+            var industries = new[] { "Mine", "Manufacture", "Design", "Cloud", "Software" };
 
             var faker = new Faker<Corporation>()
                 .RuleFor(c => c.CorporationName, f => f.Company.CompanyName())

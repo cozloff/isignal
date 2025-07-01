@@ -6,13 +6,9 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
-import { rootAuthLoader } from "@clerk/react-router/ssr.server";
+import { Toaster } from "sonner";
 import type { Route } from "./+types/root";
 import "./app.css";
-
-export async function loader(args: Route.LoaderArgs) {
-  return rootAuthLoader(args);
-}
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -38,6 +34,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        <Toaster position="top-right" richColors closeButton />
         <ScrollRestoration />
         <Scripts />
       </body>

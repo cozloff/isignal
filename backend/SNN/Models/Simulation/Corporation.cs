@@ -12,7 +12,7 @@ namespace SNN.Models
         public string CorporationName { get; set; }
 
         [Required]
-        public string Industry { get; set; } = "General";
+        public string Industry { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public virtual ApplicationIdentity User { get; set; }
