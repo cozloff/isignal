@@ -2,6 +2,8 @@ import { createCookieSessionStorage, createCookie } from "react-router";
 import { redirect } from "react-router";
 
 type SessionData = {
+  jwtToken: string;
+  refreshToken: string;
   userId: string;
   name: string;
   role: string;

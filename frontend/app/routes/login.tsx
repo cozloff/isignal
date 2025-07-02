@@ -45,7 +45,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export async function action({ request }: ActionFunctionArgs) {
   try {
-    const jwt = await import("jsonwebtoken")
+    const { jwtDecode } = await import("jwt-decode")
     const session = await getSession(request.headers.get("Cookie"));
     const formData = await request.formData();
     const userData = Object.fromEntries(formData.entries());
@@ -54,16 +54,13 @@ export async function action({ request }: ActionFunctionArgs) {
       userData.password as string
     );
 
-    console.log("Login Outcome:", outcome);
-
-    const decoded = jwt.decode(outcome);
-
-    console.log("DECODED: ", decoded);
-
-    if (outcome.success) {
-      session.set("userId", outcome.userId);
-      session.set("name", outcome.name || "");
-      session.set("role", outcome.role);
+    if (outcome.jwtToken) {
+      const decoded = jwtDecode(outcome.jwtToken);
+      session.set("jwtToken", outcome.jwtToken);
+      session.set("refreshToken", outcome.refreshToken);
+      session.set("userId", decoded.sub || "");
+      session.set("name", `${decoded.FirstName} ${decoded.LastName}` || "");
+      session.set("role", decoded.role);
 
       return redirect("/", {
         headers: {
