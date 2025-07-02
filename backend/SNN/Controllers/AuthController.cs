@@ -92,6 +92,17 @@ namespace SNN.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                return Problem(detail: "User not found", statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            if (!user.EmailConfirmed)
+            {
+                return Problem(detail: "Email is not confirmed", statusCode: StatusCodes.Status403Forbidden);
+            }
+            
             var result = await _authService.Login(model.Email, model.Password);
             if (result.IsSuccess) return base.Ok(result.Value);
 
