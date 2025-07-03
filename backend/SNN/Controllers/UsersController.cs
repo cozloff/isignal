@@ -14,15 +14,13 @@ namespace SNN.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
-        public UserController(IUserService userService)
+        private UserManager<ApplicationIdentity> _userManager;
+        public UserController(
+            IUserService userService,
+            UserManager<ApplicationIdentity> userManager
+        )
         {
             _userService = userService;
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> TestTask()
-        {
-            return Ok("Allowed Route");
         }
 
         [HttpPut("update-permission/{userId}")]
@@ -40,8 +38,20 @@ namespace SNN.Controllers
                 RoleAlreadyExist => Problem(detail: error.Message, statusCode: StatusCodes.Status409Conflict),
                 _ => throw new Exception(result.ToString())
             };
-            
+        }
 
+        // READ ALL
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var users = _userManager.Users;
+            return Ok(users);
+        }
+
+        [HttpGet("test")]
+        public async Task<IActionResult> TestTask()
+        {
+            return Ok("Allowed Route");
         }
     }
 }

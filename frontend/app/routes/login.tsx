@@ -21,6 +21,7 @@ import { getSession, commitSession } from "~/auth/sessions.server";
 import { useHeight } from "~/hooks/useHeight";
 import { loginUser } from "~/api/services/auth";
 import loginGradient from "~/assets/login-gradient.jpg";
+import { type CustomJwtPayload } from "~/types/Auth/CustomJwtPayload";
 
 const FormSchema = z.object({
   email: z.string().email(),
@@ -55,12 +56,16 @@ export async function action({ request }: ActionFunctionArgs) {
     );
 
     if (outcome.jwtToken) {
-      const decoded = jwtDecode(outcome.jwtToken);
+      const decoded = jwtDecode<CustomJwtPayload>(outcome.jwtToken);
       session.set("jwtToken", outcome.jwtToken);
       session.set("refreshToken", outcome.refreshToken);
       session.set("userId", decoded.sub || "");
       session.set("name", `${decoded.FirstName} ${decoded.LastName}` || "");
-      session.set("role", decoded.role);
+      session.set( 
+        "role", 
+        decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
+          .map((role: string) => role.toLowerCase())
+      );
 
       return redirect("/", {
         headers: {

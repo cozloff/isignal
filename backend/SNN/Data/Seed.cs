@@ -1,10 +1,12 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using Bogus;
 using Bogus.DataSets;
 using Bogus.Extensions.UnitedStates;
 using SNN.Models;
 using SNN.Services;
 using SNN.Migrations;
-using Microsoft.EntityFrameworkCore;
+
 
 namespace SNN.Data.Seed
 {
@@ -13,16 +15,25 @@ namespace SNN.Data.Seed
         private readonly IAuthService _authService;
         private readonly ApplicationDbContext _context;
 
-        public Seed(IAuthService authService, ApplicationDbContext context)
+        private readonly UserManager<ApplicationIdentity> _userManager;
+
+        public Seed(
+            IAuthService authService,
+            ApplicationDbContext context,
+            UserManager<ApplicationIdentity> userManager
+        )
         {
             _authService = authService;
             _context = context;
+            _userManager = userManager; 
         }
 
         public async Task SeedTablesAsync(CancellationToken ct)
         {
             var userIds = await SeedUsersAsync(ct);
             var corporations = SeedCorporations(userIds);
+
+            await SeedSuperUserAsync(ct);
 
             await _context.Corporations.AddRangeAsync(corporations, ct);
             await _context.SaveChangesAsync(ct);
@@ -67,6 +78,41 @@ namespace SNN.Data.Seed
 
             return userIds;
         }
+
+        private async Task SeedSuperUserAsync(CancellationToken ct)
+        {
+            var model = new RegisterModel
+            {
+                Email = "super@gmail.com",
+                Password = "password",
+                ConfirmPassword = "password",
+                FirstName = "Super",
+                LastName = "Man",
+                Institution = "Google",
+                Phone = "5555555555",
+                Title = "Super Hero",
+                WorkStreetAddress = "1st Street",
+                WorkCity = "New York",
+                WorkState = "New York",
+                WorkZip = "55555"
+            };
+
+            var registration = await _authService.Register(model);
+            if (!registration.IsSuccess) return;
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null) return;
+
+            var roles = new[] { "Base", "General", "Admin", "Developer" };
+            foreach (var role in roles)
+            {
+                await _userManager.AddToRoleAsync(user, role);
+            }
+
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            await _userManager.ConfirmEmailAsync(user, token);
+        }
+
 
         private List<Corporation> SeedCorporations(List<string> userIds)
         {

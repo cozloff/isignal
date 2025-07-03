@@ -6,7 +6,7 @@ type SessionData = {
   refreshToken: string;
   userId: string;
   name: string;
-  role: string;
+  role: string[];
   attested?: boolean;
 };
 
@@ -35,7 +35,7 @@ export async function requireUser(request: Request) {
   const session = await getValidatedSession(request);
   const userId = session.get("userId") as string;
   const name = session.get("name") as string;
-  const role = session.get("role") as string;
+  const role = session.get("role") as string[];
   return { userId, name, role };
 }
 

@@ -37,6 +37,35 @@ namespace SNN.Controllers
             if (result.IsSuccess)
             {
                 var user = await _userManager.FindByEmailAsync(model.Email);
+
+                if (user == null)
+                {
+                    return Problem
+                    (
+                        detail: "User not found after registration.",
+                        statusCode: StatusCodes.Status500InternalServerError
+                    );
+                }
+
+                if (user.Email == null)
+                {
+                    return Problem
+                    (
+                        detail: "User email doesn't exist.",
+                        statusCode: StatusCodes.Status500InternalServerError
+                    );
+                }
+
+                var roleResult = await _userManager.AddToRoleAsync(user, "Base");
+                if (!roleResult.Succeeded)
+                {
+                    return Problem
+                    (
+                        detail: "Failed to assign 'Base' role to user.",
+                        statusCode: StatusCodes.Status500InternalServerError
+                    );
+                }
+                
                 var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 var confirmationLink = Url.Action(
                     "ConfirmEmail", "Auth", new { userId = user.Id, token }, Request.Scheme
@@ -60,7 +89,6 @@ namespace SNN.Controllers
                 RegistrationFailedError => Problem(detail: error.Message, statusCode: StatusCodes.Status417ExpectationFailed),
                 _ => throw new Exception(result.ToString())
             };
-
         }
 
         [HttpGet("confirm-email")]
@@ -102,7 +130,7 @@ namespace SNN.Controllers
             {
                 return Problem(detail: "Email is not confirmed", statusCode: StatusCodes.Status403Forbidden);
             }
-            
+
             var result = await _authService.Login(model.Email, model.Password);
             if (result.IsSuccess) return base.Ok(result.Value);
 
