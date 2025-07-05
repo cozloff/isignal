@@ -42,7 +42,7 @@ namespace SNN.Errors
             _entityName = entityName;
         }
     }
-
+ 
     public class RegistrationFailedError : Error
     {
         public string _entityName { get; }
@@ -53,7 +53,16 @@ namespace SNN.Errors
         }
     }
 
+    public class EmailNotConfirmedError : Error
+    {
+        public string Email { get; }
 
+        public EmailNotConfirmedError(string email)
+            : base($"Email '{email}' has not been confirmed.")
+        {
+            Email = email;
+        }
+    }
 
 
 }

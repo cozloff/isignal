@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using SNN.Data;
 using SNN.Models;
 using SNN.Services;
@@ -21,6 +22,7 @@ namespace SNN.Controllers
         )
         {
             _userService = userService;
+            _userManager = userManager;
         }
 
         [HttpPut("update-permission/{userId}")]
@@ -44,14 +46,62 @@ namespace SNN.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var users = _userManager.Users;
-            return Ok(users);
+            var userInfo = await _userService.GetAllUserInfo();
+            return Ok(userInfo);
         }
 
-        [HttpGet("test")]
-        public async Task<IActionResult> TestTask()
+        // READ ONE
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById([FromRoute] string id)
         {
-            return Ok("Allowed Route");
+            var identityUser = await _userManager.FindByIdAsync(id);
+            if (identityUser == null) return NotFound();
+            return Ok(identityUser);
         }
+
+        // READ BY EMAIL
+        [HttpGet("find-by-email/{email}")]
+        public async Task<IActionResult> GetByEmail([FromRoute] string email)
+        {
+            var identityUser = await _userManager.FindByEmailAsync(email);
+            if (identityUser == null) return NotFound();
+            return Ok(identityUser);
+        }
+
+        // UPDATE
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update([FromRoute] string id, [FromBody] UserClaimsAndRoles updatedUser)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _userService.Update(id, updatedUser);
+
+            if (result.IsSuccess) return NoContent();
+            
+            var error = result.Errors.First();
+            return error switch
+            {
+                NotFoundError => Problem(detail: error.Message, statusCode: StatusCodes.Status400BadRequest),
+                _ => throw new Exception(result.ToString())
+            };
+        }
+
+        // DELETE
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete([FromRoute] string id)
+        {
+            var result = _userService.Delete(id);
+
+            if (result.IsSuccess) return Ok();
+
+            var error = result.Errors.First();
+            return error switch
+            {
+                NotFoundError => Problem(detail: error.Message, statusCode: StatusCodes.Status400BadRequest),
+                _ => throw new Exception(result.ToString())
+            };
+        }
+
     }
 }

@@ -20,6 +20,7 @@ import { ExternalLogin } from "~/components/Login/ExternalLogin";
 import { getSession, commitSession } from "~/auth/sessions.server";
 import { useHeight } from "~/hooks/useHeight";
 import { loginUser } from "~/api/services/auth";
+import apiClient from "~/api/axios.server";
 import loginGradient from "~/assets/login-gradient.jpg";
 import { type CustomJwtPayload } from "~/types/Auth/CustomJwtPayload";
 
@@ -66,6 +67,9 @@ export async function action({ request }: ActionFunctionArgs) {
         decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
           .map((role: string) => role.toLowerCase())
       );
+
+      apiClient.defaults.headers.common["Authorization"] =
+        `Bearer ${outcome.jwtToken}`;
 
       return redirect("/", {
         headers: {

@@ -9,7 +9,6 @@ namespace SNN.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Developer")]
     public class AuthController : ControllerBase
     {
 
@@ -29,55 +28,23 @@ namespace SNN.Controllers
 
 
         [HttpPost("register")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Post([FromBody] RegisterModel model)
+        public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
             var result = await _authService.Register(model);
-
+            
             if (result.IsSuccess)
             {
-                var user = await _userManager.FindByEmailAsync(model.Email);
-
-                if (user == null)
-                {
-                    return Problem
-                    (
-                        detail: "User not found after registration.",
-                        statusCode: StatusCodes.Status500InternalServerError
-                    );
-                }
-
-                if (user.Email == null)
-                {
-                    return Problem
-                    (
-                        detail: "User email doesn't exist.",
-                        statusCode: StatusCodes.Status500InternalServerError
-                    );
-                }
-
-                var roleResult = await _userManager.AddToRoleAsync(user, "Base");
-                if (!roleResult.Succeeded)
-                {
-                    return Problem
-                    (
-                        detail: "Failed to assign 'Base' role to user.",
-                        statusCode: StatusCodes.Status500InternalServerError
-                    );
-                }
-                
-                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                var (user, token) = result.Value;
                 var confirmationLink = Url.Action(
                     "ConfirmEmail", "Auth", new { userId = user.Id, token }, Request.Scheme
                 );
-                var message = new Message
+
+                await _emailService.SendEmail(new Message
                 {
                     To = new List<string> { user.Email },
                     Subject = "Confirm your email",
-                    Content = $"Please confirm your account by clicking this link: <a href='{confirmationLink}'>link</a>"
-                };
-
-                await _emailService.SendEmail(message);
+                    Content = $"Please confirm your account: <a href='{confirmationLink}'>link</a>"
+                });
 
                 return Ok(new { message = "Registration successful. Confirmation email sent." });
             }
@@ -85,59 +52,45 @@ namespace SNN.Controllers
             var error = result.Errors.First();
             return error switch
             {
-                EmailAlreadyExistError => Problem(detail: error.Message, statusCode: StatusCodes.Status409Conflict),
-                RegistrationFailedError => Problem(detail: error.Message, statusCode: StatusCodes.Status417ExpectationFailed),
-                _ => throw new Exception(result.ToString())
+                EmailAlreadyExistError => Conflict(error.Message),
+                RegistrationFailedError => StatusCode(417, error.Message),
+                _ => Problem("Unknown error")
             };
         }
+
 
         [HttpGet("confirm-email")]
         [AllowAnonymous]
         public async Task<IActionResult> ConfirmEmail(string userId, string token)
         {
-            try
+            var result = await _authService.ConfirmEmail(userId, token);
+
+            if (result.IsSuccess)
             {
-                if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
-                    return Problem(detail: "Invalid token or user ID", statusCode: StatusCodes.Status400BadRequest);
-
-                var user = await _userManager.FindByIdAsync(userId);
-                if (user == null)
-                    return Problem(detail: "User not found", statusCode: StatusCodes.Status404NotFound);
-
-                var result = await _userManager.ConfirmEmailAsync(user, token);
-                if (!result.Succeeded)
-                    return Problem(detail: "Error confirming your email", statusCode: StatusCodes.Status400BadRequest);
-
                 return Ok(new { message = "Email confirmed successfully." });
             }
-            catch (Exception ex)
+
+            var error = result.Errors.First();
+            return error switch
             {
-                return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
-            }
+                InvalidToken => Problem(detail: error.Message, statusCode: StatusCodes.Status400BadRequest),
+                NotFoundError => Problem(detail: error.Message, statusCode: StatusCodes.Status404NotFound),
+                _ => throw new Exception(result.ToString())
+            };
         }
 
         [HttpPost("login")]
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
-            {
-                return Problem(detail: "User not found", statusCode: StatusCodes.Status400BadRequest);
-            }
-
-            if (!user.EmailConfirmed)
-            {
-                return Problem(detail: "Email is not confirmed", statusCode: StatusCodes.Status403Forbidden);
-            }
-
             var result = await _authService.Login(model.Email, model.Password);
             if (result.IsSuccess) return base.Ok(result.Value);
 
             var error = result.Errors.First();
             return error switch
             {
-                NotFoundError => Problem(detail: error.Message, statusCode: StatusCodes.Status400BadRequest),
+                NotFoundError => Problem(detail: error.Message, statusCode: StatusCodes.Status404NotFound),
+                EmailNotConfirmedError => Problem(detail: error.Message, statusCode: StatusCodes.Status400BadRequest),
                 _ => throw new Exception(result.ToString())
             };
         }
@@ -148,8 +101,6 @@ namespace SNN.Controllers
             throw new NotImplementedException();
 
         }
-
-
 
         [HttpPost("refresh-token")]
         [AllowAnonymous]

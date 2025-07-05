@@ -9,26 +9,30 @@ namespace SNN.Services
 {
     public interface IAuthService
     {
-        public Task<Result<JwtResponse>> Register(RegisterModel model);
+        public Task<Result<(ApplicationIdentity user, string token)>> Register(RegisterModel model);
         public Task<Result<JwtResponse>> Login(string email, string password);
         public Task<Result<JwtResponse>> RefreshToken(JwtResponse model);
+        public Task<Result> ConfirmEmail(string userId, string token);
     }
     public class AuthService : IAuthService
     {
         private UserManager<ApplicationIdentity> _userManager;
         private ITokenProvider _tokenProvider;
         private IConfiguration _configuration;
+        private IEmailService _emailService;
         public AuthService(
             UserManager<ApplicationIdentity> userManager,
             ITokenProvider tokenProvider,
-            IConfiguration configuration
-            )
+            IConfiguration configuration,
+            IEmailService emailService
+        )
         {
             _userManager = userManager;
             _tokenProvider = tokenProvider;
             _configuration = configuration;
+            _emailService = emailService;
         }
-        public async Task<Result<JwtResponse>> Register(RegisterModel model)
+        public async Task<Result<(ApplicationIdentity user, string token)>> Register(RegisterModel model)
         {
             ApplicationIdentity existingUser = await _userManager.FindByEmailAsync(model.Email!);
             if (existingUser != null)
@@ -44,7 +48,6 @@ namespace SNN.Services
 
             if (!result.Succeeded)
                 return new RegistrationFailedError("Registration Failed");
-
 
             // Get new user and add claims
             ApplicationIdentity newUser = await _userManager.FindByEmailAsync(model.Email!);
@@ -62,7 +65,27 @@ namespace SNN.Services
 
             ];
             await _userManager.AddClaimsAsync(newUser!, claims);
-            
+
+            // Add role to user
+            await _userManager.AddToRoleAsync(newUser!, "Base");
+
+            // Get Confirmation Token
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+            return Result.Ok((user, token));
+        }
+
+        public async Task<Result> ConfirmEmail(string userId, string token)
+        {
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
+                return new InvalidToken();
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return new NotFoundError($"User '{userId}'");
+
+            await _userManager.ConfirmEmailAsync(user, token);
+
             return Result.Ok();
         }
 
@@ -73,6 +96,9 @@ namespace SNN.Services
             // Check if user is found 
             if (user is null || await _userManager.CheckPasswordAsync(user, password) == false)
                 return Result.Fail(new NotFoundError(email));
+
+            if (!user.EmailConfirmed)
+                return new EmailNotConfirmedError("email");
 
             IList<Claim> claims = await _userManager.GetClaimsAsync(user);
             IList<string> roles = await _userManager.GetRolesAsync(user);
@@ -90,6 +116,7 @@ namespace SNN.Services
 
             return Result.Ok(response);
         }
+        
         public async Task<Result<JwtResponse>> RefreshToken(JwtResponse model)
         {
             var token = await _tokenProvider.ValidateToken(model.JwtToken);

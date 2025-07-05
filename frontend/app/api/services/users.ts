@@ -43,20 +43,6 @@ export const getUserByEmail = async (email: string) => {
 };
 
 /**
- * Create a new user
- * POST /api/Users
- */
-export const addUser = async (user: any) => {
-  try {
-    const { data } = await apiClient.post("/api/Users", user);
-    return data;
-  } catch (error) {
-    console.error("Failed to create user:", error);
-    throw error;
-  }
-};
-
-/**
  * Update an existing user
  * PUT /api/Users/:id
  */
