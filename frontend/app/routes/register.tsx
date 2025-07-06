@@ -1,14 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   redirect,
   useSubmit,
-  data,
-  useActionData,
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
   useSearchParams,
   useNavigate,
   Form as ReactRouterForm,
+  data,
 } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,33 +18,46 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
+  FormMessage,
 } from "~/components/ui/form";
 import { Button } from "~/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "~/components/ui/tabs";
+import { Input } from "~/components/ui/input";
 import { RightSideDecal } from "~/components/Login/RightSideDecal";
 import { RegisterHeader } from "~/components/Login/RegisterHeader";
-import { registerUser } from "~/api/services/auth";
 import { useHeight } from "~/hooks/useHeight";
 import { getSession, commitSession } from "~/auth/sessions.server";
 import loginGradient from "~/assets/login-gradient.jpg";
 import { type Registration } from "~/types/Auth/Registration";
 
-const FormSchema = z
+const passwordValidation = {
+  lowerCase: /[a-z]/,
+  upperCase: /[A-Z]/,
+  number: /[0-9]/,
+  specialChar: /[^a-zA-Z0-9]/,
+};
+
+const RegisterSchema = z
   .object({
-    institution: z.string().min(2).max(100),
     firstName: z.string().min(2).max(100),
     lastName: z.string().min(2).max(100),
-    title: z.string().min(2).max(100),
     phone: z.string().min(10).max(15),
-    email: z.string().email({ message: "Invalid email address." }),
+    institution: z.string().min(2).max(100),
+    title: z.string().min(2).max(100),
     workStreetAddress: z.string().min(2).max(100),
     workCity: z.string().min(2).max(100),
     workState: z.string().min(2).max(100),
-    workZip: z.string().regex(/^\d{5}$/, {
-      message: "Zip code must be exactly 5 digits.",
-    }),
-    password: z.string().min(2, { message: "Invalid password." }),
-    confirmPassword: z.string().min(2),
+    workZip: z
+      .string()
+      .regex(/^\d{5}(?:[-]\d{4})?$/, { message: "Invalid zip code" }),
+    email: z.string().email({ message: "Invalid email address" }),
+    password: z
+      .string()
+      .regex(passwordValidation.lowerCase, "At least one lowercase letter")
+      .regex(passwordValidation.upperCase, "At least one uppercase letter")
+      .regex(passwordValidation.number, "At least one number")
+      .regex(passwordValidation.specialChar, "At least one special character"),
+    confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -65,14 +77,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
   );
 }
-
 export async function action({ request }: ActionFunctionArgs) {
   try {
+    const { registerUser } = await import("~/api/services/auth");
     const formData = await request.formData();
     const rawData = Object.fromEntries(formData.entries());
-    const parsed = FormSchema.safeParse(rawData);
-
-    console.log("Parsed: ", parsed);
+    const parsed = RegisterSchema.safeParse(rawData);
 
     if (!parsed.success) return redirect("/register?error=1");
 
@@ -85,34 +95,38 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 }
 
-export default function Register() {
-  const { h1000, h800 } = useHeight();
-  const actionData = useActionData<typeof action>();
-  const submit = useSubmit();
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: {
-      institution: "",
-      firstName: "",
-      lastName: "",
-      title: "",
-      phone: "",
-      email: "",
-      workStreetAddress: "",
-      workCity: "",
-      workState: "",
-      workZip: "",
-      password: "",
-      confirmPassword: "",
-    },
-  });
+export default function RegisterForm() {
+  const { h800 } = useHeight();
   const [searchParams, setSearchParams] = useSearchParams();
+  const submit = useSubmit();
   const navigate = useNavigate();
-  const buttonPadding = h800 ? "12px 12px" : "20px 20px";
+  const [currentTab, setCurrentTab] = useState("basic");
+  const form = useForm<z.infer<typeof RegisterSchema>>({
+    resolver: zodResolver(RegisterSchema),
+  });
 
-  const handleRegister = async (data: z.infer<typeof FormSchema>) => {
-    submit(data, { action: "/register", method: "post" });
-  };
+  const getTabErrorCount = (fields: string[]) =>
+    fields.filter(
+      (field) =>
+        form.formState.errors[field as keyof typeof form.formState.errors]
+    ).length;
+
+  const basicFields = ["firstName", "lastName", "phone"];
+  const workFields = [
+    "institution",
+    "title",
+    "workStreetAddress",
+    "workCity",
+    "workState",
+    "workZip",
+  ];
+  const passwordFields = ["password", "confirmPassword"];
+
+  const tabMeta = [
+    ["basic", "Basic Info", basicFields],
+    ["work", "Work Info", workFields],
+    ["password", "Password", passwordFields],
+  ] as const;
 
   useEffect(() => {
     if (searchParams.get("error")) {
@@ -122,98 +136,133 @@ export default function Register() {
     }
   }, [searchParams, setSearchParams]);
 
-  return (
-    <div className="flex h-full items-center justify-center">
-      <div
-        className={`relative z-10 flex h-[80%] w-[90%] min-w-80 overflow-hidden 
-            rounded-3xl bg-[#ede9e6] bg-cover xl:w-[65%]`}
-        style={{
-          backgroundImage: `url(${loginGradient})`,
-        }}
-      >
-        <div
-          className="flex w-full flex-col items-center bg-[#f2f0eb] p-15 
-            text-center lg:w-1/2"
-        >
-          <RegisterHeader />
-          <div
-            className={`flex w-[120%] flex-col items-center lg:w-[90%] xl:w-[80%] ${
-              h800 ? "my-10 gap-6" : h1000 ? "my-15 gap-7" : "my-20 gap-8"
-            } `}
-          >
-            <Form {...form}>
-              <ReactRouterForm
-                onSubmit={form.handleSubmit(handleRegister)}
-                className="w-full space-y-6"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {[
-                    { name: "institution", label: "Institution" },
-                    { name: "firstName", label: "First Name" },
-                    { name: "lastName", label: "Last Name" },
-                    { name: "title", label: "Title" },
-                    { name: "phone", label: "Phone" },
-                    { name: "workStreetAddress", label: "Work Street Address" },
-                    { name: "workCity", label: "Work City" },
-                    { name: "workState", label: "Work State" },
-                    { name: "workZip", label: "Work Zip" },
-                    { name: "password", label: "Password", type: "password" },
-                    {
-                      name: "confirmPassword",
-                      label: "Confirm Password",
-                      type: "password",
-                    },
-                    { name: "email", label: "Email" },
-                  ].map(({ name, label, type = "text" }) => (
-                    <FormField
-                      key={name}
-                      control={form.control}
-                      name={name as keyof z.infer<typeof FormSchema>}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm text-gray-700">
-                            {label}
-                          </FormLabel>
-                          <FormControl>
-                            <input
-                              {...field}
-                              type={type}
-                              className="w-full rounded-md border border-gray-300 px-4 py-2 
-                              text-xs shadow-sm focus:border-blue-500 focus:ring 
-                              focus:ring-blue-200"
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                </div>
+  const handleSubmit = async (data: z.infer<typeof RegisterSchema>) => {
+    submit(data, { action: "/register", method: "post" });
+  };
 
-                <Button
-                  type="submit"
-                  style={{ padding: buttonPadding }}
-                  className={`z-10 w-[50%] transform cursor-pointer rounded-md border border-2 border-blue-400 bg-blue-500 text-white shadow-md
-                 transition duration-300 ease-in-out hover:scale-105 hover:bg-blue-500 ${
-                   h800 ? "text-sm" : "text-md"
-                 }`}
-                >
-                  Register
-                </Button>
-              </ReactRouterForm>
-            </Form>
-            <span className="text-sm">
-              Already have an account?{" "}
-              <a
-                onClick={() => navigate("/login")}
-                className="cursor-pointer text-blue-500"
+  const renderField = (
+    name: keyof z.infer<typeof RegisterSchema>,
+    placeholder: string,
+    type: string = "text"
+  ) => (
+    <FormField
+      control={form.control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className="my-3">
+          <FormControl>
+            <Input
+              placeholder={placeholder}
+              className="border-2 border-solid"
+              type={type}
+              {...field}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+
+  return (
+    <div
+      className="relative z-10 flex h-[80%] w-[90%] min-w-80 overflow-hidden rounded-3xl bg-[#ede9e6] bg-cover xl:w-[65%]"
+      style={{ backgroundImage: `url(${loginGradient})` }}
+    >
+      <div
+        className={`${
+          h800 ? "text-sm" : "text-md"
+        } flex w-full flex-col items-center bg-[#f2f0eb] p-15 text-center lg:w-1/2`}
+      >
+        <RegisterHeader />
+        <div className="w-full">
+          <Form {...form}>
+            <ReactRouterForm
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="mb-10"
+            >
+              <Tabs
+                value={currentTab}
+                onValueChange={setCurrentTab}
+                defaultValue="basic"
               >
-                Login
-              </a>
-            </span>
-          </div>
+                <TabsList>
+                  {tabMeta.map(([key, label, fields]) => {
+                    const errorCount = getTabErrorCount(fields);
+
+                    return (
+                      <TabsTrigger
+                        key={key}
+                        value={key}
+                        className="relative flex cursor-pointer items-center gap-1"
+                      >
+                        {label}
+                        {errorCount > 0 && (
+                          <span className="ml-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-xs text-white">
+                            {errorCount}
+                          </span>
+                        )}
+                      </TabsTrigger>
+                    );
+                  })}
+                </TabsList>
+
+                <TabsContent value="basic">
+                  {renderField("firstName", "First Name")}
+                  {renderField("lastName", "Last Name")}
+                  {renderField("phone", "Phone Number", "number")}
+                  <Button
+                    className="float-end mt-3 mb-2"
+                    onClick={() => setCurrentTab("work")}
+                  >
+                    Next
+                  </Button>
+                </TabsContent>
+
+                <TabsContent value="work">
+                  <div className="grid grid-cols-2 gap-x-4">
+                    {renderField("institution", "Institution")}
+                    {renderField("title", "Title")}
+                    {renderField("workStreetAddress", "Street Address")}
+                    {renderField("workCity", "City")}
+                    {renderField("workState", "State")}
+                    {renderField("workZip", "Zip Code")}
+                  </div>
+                  <div className="mt-3 flex justify-between">
+                    <Button onClick={() => setCurrentTab("basic")}>Back</Button>
+                    <Button onClick={() => setCurrentTab("password")}>
+                      Next
+                    </Button>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="password">
+                  {renderField("password", "Password", "password")}
+                  {renderField(
+                    "confirmPassword",
+                    "Confirm Password",
+                    "password"
+                  )}
+                  <div className="mt-3 flex justify-between">
+                    <Button onClick={() => setCurrentTab("work")}>Back</Button>
+                    <Button type="submit">Create account</Button>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </ReactRouterForm>
+          </Form>
+          <span>
+            Already have an account?{" "}
+            <a
+              onClick={() => navigate("/login")}
+              className="cursor-pointer text-blue-500"
+            >
+              Login
+            </a>
+          </span>
         </div>
-        <RightSideDecal />
       </div>
+      <RightSideDecal />
     </div>
   );
 }
