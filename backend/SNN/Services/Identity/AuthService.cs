@@ -11,8 +11,15 @@ namespace SNN.Services
     {
         public Task<Result<(ApplicationIdentity user, string token)>> Register(RegisterModel model);
         public Task<Result<JwtResponse>> Login(string email, string password);
+        public Task<Result<JwtResponse>> LoginInternal(string email);
         public Task<Result<JwtResponse>> RefreshToken(JwtResponse model);
         public Task<Result> ConfirmEmail(string userId, string token);
+        public Task<Result<JwtResponse>> RegisterInternalUser(RegisterInternalModel model);
+        public Task<Result<(ApplicationIdentity user, string token)>> ValidateResendConfirmation(string email);
+        public Task<bool> IsUserProvisioned(string email);
+        public Task<Result<string>> ForgotPassword(string email);
+        public Task<Result> ResetPassword(ResetPasswordDto dto);
+
     }
     public class AuthService : IAuthService
     {
@@ -32,6 +39,40 @@ namespace SNN.Services
             _configuration = configuration;
             _emailService = emailService;
         }
+
+        public async Task<Result<JwtResponse>> RegisterInternalUser(RegisterInternalModel model)
+        {
+            ApplicationIdentity existingUser = await _userManager.FindByEmailAsync(model.Email!);
+            if (existingUser != null)
+                return new EmailAlreadyExistError(model.Email);
+
+            ApplicationIdentity user = new ApplicationIdentity
+            {
+                Email = model.Email,
+                UserName = model.Email
+            };
+
+            var result = await _userManager.CreateAsync(user);
+
+            if (!result.Succeeded)
+                return new RegistrationFailedError("Registration Failed");
+
+            ApplicationIdentity newUser = await _userManager.FindByEmailAsync(model.Email!);
+            IList<Claim> claims = [
+                new Claim("FirstName", model.FirstName),
+                new Claim("LastName", model.LastName),
+                new Claim("Institution", "Hawai'i Department of Education")
+            ];
+            await _userManager.AddClaimsAsync(newUser!, claims); // Generate Tokens
+            await _userManager.AddToRoleAsync(newUser!, "Base"); // Add role Base for new user
+
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(newUser);
+
+            await _userManager.ConfirmEmailAsync(newUser, token);
+
+            return Result.Ok();
+        }
+
         public async Task<Result<(ApplicationIdentity user, string token)>> Register(RegisterModel model)
         {
             ApplicationIdentity existingUser = await _userManager.FindByEmailAsync(model.Email!);
@@ -94,8 +135,10 @@ namespace SNN.Services
             ApplicationIdentity user = await _userManager.FindByEmailAsync(email);
 
             // Check if user is found 
-            if (user is null || await _userManager.CheckPasswordAsync(user, password) == false)
-                return Result.Fail(new NotFoundError(email));
+            if (user is null)
+                return new IncorrectEmail(email);
+            else if (await _userManager.CheckPasswordAsync(user, password) == false)
+                return new IncorrectPassword(password);
 
             if (!user.EmailConfirmed)
                 return new EmailNotConfirmedError("email");
@@ -116,7 +159,28 @@ namespace SNN.Services
 
             return Result.Ok(response);
         }
-        
+
+        public async Task<Result<JwtResponse>> LoginInternal(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+                return new NotFoundError(email);
+
+            IList<Claim> claims = await _userManager.GetClaimsAsync(user);
+            IList<string> roles = await _userManager.GetRolesAsync(user);
+
+            // Generate Tokens
+            var token = _tokenProvider.Create(user, claims, roles);
+            var refreshToken = _tokenProvider.CreateRefreshToken();
+
+            // Update User identity values
+            user.RefreshTokenExpiry = DateTime.UtcNow.AddHours(_configuration.GetValue<int>("Jwt:RefreshTokenExpirationInHours"));
+            user.RefreshToken = refreshToken;
+            await _userManager.UpdateAsync(user);
+
+            JwtResponse response = new() { JwtToken = token, RefreshToken = refreshToken };
+            return Result.Ok(response); // send here for future validation or just a 201
+        }
         public async Task<Result<JwtResponse>> RefreshToken(JwtResponse model)
         {
             var token = await _tokenProvider.ValidateToken(model.JwtToken);
@@ -150,6 +214,57 @@ namespace SNN.Services
             return Result.Ok(response);
         }
 
+        public async Task<Result<(ApplicationIdentity user, string token)>> ValidateResendConfirmation(string email)
+        {
+            ApplicationIdentity user = await _userManager.FindByEmailAsync(email);
+            if (user is null)
+                return new IncorrectEmail(email);
 
+            if (user.EmailConfirmed)
+                return new EmailAlreadyConfirmedError(email);
+
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+            return Result.Ok((user, token));
+        }
+
+        public async Task<bool> IsUserProvisioned(string email)
+        {
+            ApplicationIdentity user = await _userManager.FindByEmailAsync(email);
+            if (user is null)
+                return false;
+            return true;
+        }
+
+        public async Task<Result<string>> ForgotPassword(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user is null)
+                return new IncorrectEmail(email);
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var baseLink = _configuration["EmailConfiguration:Redirect"];
+            var resetPath = "login/reset-password";
+
+            var builder = new UriBuilder(new Uri(baseLink))
+            {
+                Path = resetPath,
+                Query = $"userId={Uri.EscapeDataString(user.Id)}&token={Uri.EscapeDataString(token)}"
+            };
+
+            return Result.Ok(builder.Uri.ToString());
+        }
+
+        public async Task<Result> ResetPassword(ResetPasswordDto dto)
+        {
+            var user = await _userManager.FindByIdAsync(dto.UserId);
+            if (user == null) return new NotFoundError("User");
+
+            var result = await _userManager.ResetPasswordAsync(user, dto.Token, dto.NewPassword);
+            if (!result.Succeeded)
+                return Result.Fail("Password reset failed").WithErrors(result.Errors.Select(e => new Error(e.Description)));
+
+            return Result.Ok();
+        }
     }
 }

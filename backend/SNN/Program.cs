@@ -9,11 +9,17 @@ using SNN.Extensions;
 using SNN.Models;
 using SNN.Services;
 using SNN.Exceptions;
+using Serilog;
+using Serilog.Sinks.Grafana.Loki;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+Serilog.Debugging.SelfLog.Enable(Console.Error);
+builder.Logging.ClearProviders();
+builder.Host.UseSerilog((ctx, cfg) => cfg.ReadFrom.Configuration(ctx.Configuration));
 
+// Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddDbContext<ApplicationDbContext>(
     options => options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
@@ -23,6 +29,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(
 builder.Services.AddSingleton<ITokenProvider, TokenProvider>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddTransient<Seed>();
 builder.Services.AddSwaggerGenWithAuth();
 

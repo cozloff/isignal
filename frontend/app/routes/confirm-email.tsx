@@ -11,7 +11,7 @@ import { useHeight } from "~/hooks/useHeight";
 import { AxiosError } from "~/api/axios-error";
 import loginGradient from "~/assets/login-gradient.jpg";
 import logo from "~/assets/logo-hidoe.png";
-import emailIcon from "~/assets/3d-mail.png";
+import emailIcon from "~/assets/mail-icon.png";
 
 export async function action({ request }: ActionFunctionArgs) {
   try {

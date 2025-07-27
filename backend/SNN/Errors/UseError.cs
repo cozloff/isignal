@@ -18,7 +18,7 @@ namespace SNN.Errors
     public class InvalidToken : Error
     {
         public InvalidToken()
-        : base("Invalid Token"){}
+        : base("Invalid Token") { }
     }
 
     public class RoleAlreadyExist : Error
@@ -35,19 +35,20 @@ namespace SNN.Errors
 
     public class EmailAlreadyExistError : Error
     {
-        public string _entityName { get; }
-        public EmailAlreadyExistError(string entityName)
-            : base($"'{entityName}' already exist")
+        public string Email { get; }
+
+        public EmailAlreadyExistError(string email)
+            : base("AUTH_EMAIL_ALREADY_EXISTS")
         {
-            _entityName = entityName;
+            Email = email;
         }
     }
- 
+
     public class RegistrationFailedError : Error
     {
         public string _entityName { get; }
         public RegistrationFailedError(string entityName)
-            : base($"Failed to register user '{entityName}'")
+            : base("AUTH_REGISTRATION_FAILED")
         {
             _entityName = entityName;
         }
@@ -58,11 +59,59 @@ namespace SNN.Errors
         public string Email { get; }
 
         public EmailNotConfirmedError(string email)
-            : base($"Email '{email}' has not been confirmed.")
+            : base("AUTH_EMAIL_NOT_CONFIRMED")
         {
             Email = email;
         }
     }
 
+    public class EmailAlreadyConfirmedError : Error
+    {
+        public string Email { get; }
+
+        public EmailAlreadyConfirmedError(string email)
+            : base("AUTH_USER_ALREADY_CONFIRMED")
+        {
+            Email = email;
+        }
+    }
+
+    public class UserUpdateFailedError : Error
+    {
+        public string Email { get; }
+
+        public UserUpdateFailedError(string email)
+            : base($"User '{email}' has not been updated.")
+        {
+            Email = email;
+        }
+    }
+
+    public class IncorrectEmail : Error
+    {
+        public string Email { get; }
+
+        public IncorrectEmail(string email)
+            : base("AUTH_USER_NOT_FOUND")
+        {
+            Email = email;
+        }
+    }
+
+    public class IncorrectPassword : Error
+    {
+        public string Password { get; }
+
+        public IncorrectPassword(string password)
+            : base("AUTH_INVALID_PASSWORD")
+        {
+            Password = password;
+        }
+    }
+    
+    public class UnexpectedError : Error
+    {
+        public UnexpectedError(string message) : base(message) { }
+    }
 
 }

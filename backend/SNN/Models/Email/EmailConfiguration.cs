@@ -7,5 +7,7 @@ namespace SNN.Models
         public int Port { get; set; }
         public string UserName { get; set; } = null!;
         public string Password { get; set; } = null!;
+        public required string Link { get; set; }
+        public required string Redirect { get; set; }
     }
 }
