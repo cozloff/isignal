@@ -987,16 +987,18 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\cozlo\\Desktop\\isignal\\backend\\SNNTests\\SNNTests.csproj",
+      "projectUniqueName": "C:\\Users\\cozlo\\Desktop\\fuck\\isignal\\backend\\SNNTests\\SNNTests.csproj",
       "projectName": "SNNTests",
-      "projectPath": "C:\\Users\\cozlo\\Desktop\\isignal\\backend\\SNNTests\\SNNTests.csproj",
+      "projectPath": "C:\\Users\\cozlo\\Desktop\\fuck\\isignal\\backend\\SNNTests\\SNNTests.csproj",
       "packagesPath": "C:\\Users\\cozlo\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\cozlo\\Desktop\\isignal\\backend\\SNNTests\\obj\\",
+      "outputPath": "C:\\Users\\cozlo\\Desktop\\fuck\\isignal\\backend\\SNNTests\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\cozlo\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
-      "originalTargetFrameworks": ["net8.0"],
+      "originalTargetFrameworks": [
+        "net8.0"
+      ],
       "sources": {
         "https://api.nuget.org/v3/index.json": {}
       },
@@ -1007,7 +1009,9 @@
         }
       },
       "warningProperties": {
-        "warnAsError": ["NU1605"]
+        "warnAsError": [
+          "NU1605"
+        ]
       },
       "restoreAuditProperties": {
         "enableAudit": "true",

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "9rOCnPGnuV23YygtSVB7qCSMusBocCuebfIM+cBQG0HAWZVD6ld7oAg+QRuPsWbaDFT2cpuoi7+1P9MOQFwyQQ==",
+  "dgSpecHash": "gn4MgnZ2COCOJpugi/LjDnr6oGX+bl+wekVq8G3qYRXUBnSW9y6gxTOrdMyx0geQx23bPzMt/6q9qY3CCM3otA==",
   "success": true,
-  "projectFilePath": "C:\\Users\\cozlo\\Desktop\\isignal\\backend\\SNNTests\\SNNTests.csproj",
+  "projectFilePath": "C:\\Users\\cozlo\\Desktop\\fuck\\isignal\\backend\\SNNTests\\SNNTests.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\cozlo\\.nuget\\packages\\coverlet.collector\\6.0.0\\coverlet.collector.6.0.0.nupkg.sha512",
     "C:\\Users\\cozlo\\.nuget\\packages\\microsoft.codecoverage\\17.8.0\\microsoft.codecoverage.17.8.0.nupkg.sha512",
